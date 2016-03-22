@@ -1,0 +1,3 @@
+{{extend 'layout.html'}}
+<h1>Questo è il template default/showtask.html</h1>
+{{=BEAUTIFY(response._vars)}}
