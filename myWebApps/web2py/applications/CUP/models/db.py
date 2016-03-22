@@ -74,8 +74,8 @@ auth_tablenames ='''
 '''.split()
 
 ## campi aggiuntivi si definiscono dopo auth = Auth(db)
-#for auth_tablename in auth_tablenames:
-#    auth.settings.extra_fields[auth_tablenames]=[Field_uuid]
+for auth_tablename in auth_tablenames:
+    auth.settings.extra_fields[auth_tablenames]=[Field_uuid]
 
 ## e prima di auth.define_tables(...)
 
@@ -121,35 +121,34 @@ mostraCodiceNome=' %(codice)s %(nome)s'
 
 #schema DB creato a partire da (ma non identico a) schema ER del 16/03/2016
 
+#le seguenti due righe aggiungerebbero (append) fields comuni a tutte le tabelle non auth
 #db._common_fields.append(Fields_signature) #anche se questa riga viene prima i campi vengono appesi dopo quelli definiti dopo
 #db._common_fields.append(Field_uuid) 
 
 #tabelle e relazioni
 db.define_table("Categoria_servizio",
-#   Field_uuid,
-#    Fields_signature,
+    Field_uuid,
+    Fields_signature,
     Field("codice", "string", default=valoreNonDefinito,length=3),
     Field("nome", "string", default=valoreNonDefinito))#,
     #migrate=False)
 
 db.define_table("Stato_prestazione",
-#   Field_uuid,
-#    Fields_signature,
+    Field_uuid,
+    Fields_signature,
     Field("codice", "string", notnull=True, default=valoreNonDefinito, length=3),
     Field("nome", "string", default=valoreNonDefinito))
 
 Agente = db.Table(db,"Agente",
-#    Field_uuid,
-#    Fields_signature,
-    Field("id_auth_user", "reference auth_user"),
+    Field_uuid,
+    Fields_signature,
+    Field("uuid_auth_user", "reference auth_user"),
     Field("codice", "string", default=valoreNonDefinito),
     Field("nome", "string", default=valoreNonDefinito),
     Field("cap", "string", default='00000', length=5),
     Field("via", "string", default=valoreNonDefinito),
-#    Field("id_Comune", "reference Comune"),
     Field("descrizione", "text", default=valoreNonDefinito))
-Agente.id_auth_user.requires=IS_IN_DB( db, 'auth_user.id', ' %(first_name)s %(last_name)s (%(email)s)') 
-#Agente.id_auth_user.requires=IS_IN_DB( db, 'comune.id', ' %(Denominazione in italiano)s %(auth_user.name)s') 
+Agente.uuid_auth_user.requires=IS_IN_DB( db, 'auth_user.uuid', ' %(first_name)s %(last_name)s (%(email)s)') 
 
 db.define_table("Cliente", 
     Agente)
@@ -157,8 +156,8 @@ db.define_table("Fornitore",
     Agente)
 
 db.define_table("Servizio",
-#   Field_uuid,
-#    Fields_signature,
+    Field_uuid,
+    Fields_signature,
     Field("id_Categoria_servizio", "reference Categoria_servizio"),
     Field("codice", "string", default=valoreNonDefinito),
     Field("nome", "string", default=valoreNonDefinito),
@@ -168,8 +167,8 @@ db.define_table("Servizio",
 db.Servizio.id_Categoria_servizio.requires=IS_IN_DB( db, 'Categoria_servizio.id', mostraCodiceNome)
 
 db.define_table("Prestazione",
-#    Field_uuid,
-#    Fields_signature,
+    Field_uuid,
+    Fields_signature,
     Field("id_Servizio", "reference Servizio"),
     Field("id_Fornitore", "reference Fornitore"),
     Field("id_Cliente", "reference Cliente"),
@@ -186,8 +185,8 @@ db.Prestazione.id_Cliente.requires=IS_IN_DB( db, 'Cliente.id', mostraCodiceNome)
 db.Prestazione.id_Stato_prestazione.requires=IS_IN_DB( db, 'Stato_prestazione.id', mostraCodiceNome)
 
 db.define_table("Servizio_disponibile",
-#   Field_uuid,
-#    Fields_signature,
+    Field_uuid,
+    Fields_signature,
     Field("id_Servizio", "reference Servizio"),
     Field("id_Fornitore", "reference Fornitore"),
     Field("id_Categoria_servizio", "reference Categoria_servizio"),
@@ -212,8 +211,8 @@ db.Servizio_disponibile.id_Fornitore.requires=IS_IN_DB( db, 'Fornitore.id', most
 db.Servizio_disponibile.id_Categoria_servizio.requires=IS_IN_DB( db, 'Categoria_servizio.id', mostraCodiceNome)
 
 db.define_table("Soddisfazione",
-#   Field_uuid,
-#    Fields_signature,
+    Field_uuid,
+    Fields_signature,
     Field("punteggio_cliente", "integer", default=valoreNonDefinito),
     Field("commento_cliente", "text", default=valoreNonDefinito),
     Field("commento_fornitore", "text", default=valoreNonDefinito),
