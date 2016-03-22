@@ -75,7 +75,7 @@ auth_tablenames ='''
 
 ## campi aggiuntivi si definiscono dopo auth = Auth(db)
 for auth_tablename in auth_tablenames:
-    auth.settings.extra_fields[auth_tablenames]=[Field_uuid]
+    auth.settings.extra_fields[auth_tablename]=[Field_uuid]
 
 ## e prima di auth.define_tables(...)
 
