@@ -53,18 +53,35 @@ def call():
     return service()
 
 def home():
-    #T.set_current_languages('it')
     homeTitle=T('Le tue richieste')
-    db.Prestazione.Servizio.writable = False
-    listOfLinks = [   lambda row: A('Vedi servizio '+str(db.Servizio[row.Servizio].id),_href=URL("crud","tabella_Servizio/view/Servizio",args=[row.Servizio])), 
-                lambda row: A('Vedi fornitore'+str(db.Fornitore[row.Fornitore].id),_href=URL("crud","tabella_Fornitore/view/Fornitore",args=[row.Fornitore]))]
-    grid = SQLFORM.smartgrid( 
-        db.Prestazione, 
-        user_signature=False, 
-        linked_tables=['Servizio'],
-        links=listOfLinks,
-        links_in_grid=True
-        )
+
+    query = (db.Prestazione.is_active==True) #& (db.Prestazione.id>0)     rows = db(query).select(        db.Prestazione.ALL, db.Servizio.ALL,db.Cliente.ALL,        left=[db.Servizio.on(db.Prestazione.Servizio==db.Servizio.id), db.Cliente.on(db.Prestazione.Cliente==db.Cliente.id)])    tabella=''
+    for row in rows:
+        tabella = tabella + 'Prestazione del '+str(row.Prestazione.giorno)+': il cliente ' + str(row.Prestazione.Cliente) + ' ha eseguito il servizio '+ str(row.Servizio.nome)+'; '
+ 
+    grid=SQLFORM.grid(db.Prestazione                        ,left=[db.Servizio.on(db.Prestazione.Servizio==db.Servizio.id), db.Cliente.on(db.Prestazione.Cliente==db.Cliente.id)]                        ,fields=[db.Prestazione.id,db.Prestazione.giorno,db.Cliente.nome                                ,db.Fornitore.nome                                ,db.Servizio.nome                                ,db.Servizio.descrizione]                        ,user_signature=False)    
+    #db.Prestazione.Servizio.writable = False
+    #listOfLinks = [   lambda row: A('Vedi servizio '+str(db.Servizio[row.Servizio].id),_href=URL("crud","tabella_Servizio/view/Servizio",args=[row.Servizio])), 
+    #            lambda row: A('Vedi fornitore'+str(db.Fornitore[row.Fornitore].id),_href=URL("crud","tabella_Fornitore/view/Fornitore",args=[row.Fornitore]))]
+    #grid = SQLFORM.smartgrid( 
+    #    Prestazioni,
+    #    user_signature=False, 
+    #    linked_tables=['Servizio'],
+    #    links=listOfLinks,
+    #    links_in_grid=True
+    #    )
+
+    #db.Prestazione.Servizio.writable = False
+    #listOfLinks = [   lambda row: A('Vedi servizio '+str(db.Servizio[row.Servizio].id),_href=URL("crud","tabella_Servizio/view/Servizio",args=[row.Servizio])), 
+    #            lambda row: A('Vedi fornitore'+str(db.Fornitore[row.Fornitore].id),_href=URL("crud","tabella_Fornitore/view/Fornitore",args=[row.Fornitore]))]
+    #grid = SQLFORM.smartgrid( 
+    #    db.Prestazione, constraints = dict (Prestazione=query),
+    #    user_signature=False, 
+    #    linked_tables=['Servizio'],
+    #    links=listOfLinks,
+    #    links_in_grid=True
+    #    )
+
     #youtube = plugin_wiki.widget('youtube',code='l7AWnfFRc7g')
     pie = plugin_wiki.widget('pie_chart',data='10,20,30',names='TAC,RNM,PET',width=300,height=150,align='center')
     bar = plugin_wiki.widget('bar_chart',data='10,20,30',names='TAC,RNM,PET',width=300,height=150,align='center')
