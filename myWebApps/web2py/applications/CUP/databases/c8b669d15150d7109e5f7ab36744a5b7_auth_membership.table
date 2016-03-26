@@ -22,24 +22,24 @@ sS'type'
 p10
 S'reference auth_user'
 p11
-ssS'is_active'
+ssS'uuid'
 p12
 (dp13
 g4
-I512
+I64
 sg5
 I00
 sg6
 I4
 sg7
-S'CHAR(1)'
+S'CHAR(64)'
 p14
 sg9
 I00
 sg10
-S'boolean'
+S'string'
 p15
-ssS'created_by'
+ssS'is_active'
 p16
 (dp17
 g4
@@ -47,16 +47,16 @@ I512
 sg5
 I00
 sg6
-I6
+I5
 sg7
-S'INTEGER REFERENCES auth_user (id) ON DELETE CASCADE  '
+S'CHAR(1)'
 p18
 sg9
 I00
 sg10
-S'reference auth_user'
+S'boolean'
 p19
-ssS'created_on'
+ssS'created_by'
 p20
 (dp21
 g4
@@ -64,16 +64,16 @@ I512
 sg5
 I00
 sg6
-I5
+I7
 sg7
-S'TIMESTAMP'
+S'INTEGER REFERENCES auth_user (id) ON DELETE CASCADE  '
 p22
 sg9
 I00
 sg10
-S'datetime'
+S'reference auth_user'
 p23
-ssS'modified_on'
+ssS'created_on'
 p24
 (dp25
 g4
@@ -81,17 +81,18 @@ I512
 sg5
 I00
 sg6
-I7
+I6
 sg7
 S'TIMESTAMP'
 p26
 sg9
 I00
 sg10
-g23
-ssS'modified_by'
+S'datetime'
 p27
-(dp28
+ssS'modified_on'
+p28
+(dp29
 g4
 I512
 sg5
@@ -99,15 +100,31 @@ I00
 sg6
 I8
 sg7
-S'INTEGER REFERENCES auth_user (id) ON DELETE CASCADE  '
-p29
+S'TIMESTAMP'
+p30
 sg9
 I00
 sg10
-g19
+g27
+ssS'modified_by'
+p31
+(dp32
+g4
+I512
+sg5
+I00
+sg6
+I9
+sg7
+S'INTEGER REFERENCES auth_user (id) ON DELETE CASCADE  '
+p33
+sg9
+I00
+sg10
+g23
 ssS'group_id'
-p30
-(dp31
+p34
+(dp35
 g4
 I512
 sg5
@@ -116,15 +133,15 @@ sg6
 I3
 sg7
 S'INTEGER REFERENCES auth_group (id) ON DELETE CASCADE  '
-p32
+p36
 sg9
 I00
 sg10
 S'reference auth_group'
-p33
+p37
 ssS'id'
-p34
-(dp35
+p38
+(dp39
 g4
 I512
 sg5
@@ -133,9 +150,9 @@ sg6
 I1
 sg7
 S'INTEGER PRIMARY KEY AUTOINCREMENT'
-p36
+p40
 sg9
 I00
 sg10
-g34
+g38
 ss.

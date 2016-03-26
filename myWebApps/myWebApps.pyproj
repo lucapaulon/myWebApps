@@ -1005,6 +1005,7 @@
     <Content Include="web2py\applications\CUP\static\js\web2py.js" />
     <Content Include="web2py\applications\CUP\views\appadmin.html" />
     <Content Include="web2py\applications\CUP\views\default\index.html" />
+    <Content Include="web2py\applications\CUP\views\default\home.html" />
     <Content Include="web2py\applications\CUP\views\default\user.html" />
     <Content Include="web2py\applications\CUP\views\generic.html" />
     <Content Include="web2py\applications\CUP\views\generic.ics" />

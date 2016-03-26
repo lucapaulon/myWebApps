@@ -5,8 +5,7 @@ response.generic_patterns = ['crud/*'] #abilita le view generiche
 #crud = Crud(db)
 #crud.settings.controller = 'crud'
 
-tabelle= [tn for tn in db.tables if not tn.startswith('auth_')]
-
+tabelle= [tn for tn in db.tables if not (tn.endswith('_archive') or tn.startswith('auth_'))  ]
 response.menu = [
         (T('Home'), False, URL('default', 'index'), []),
         (T('My Tables'), False, '#',

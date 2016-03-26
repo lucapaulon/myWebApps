@@ -10,7 +10,7 @@ p5
 I00
 sS'sortable'
 p6
-I11
+I12
 sS'sql'
 p7
 S'INTEGER REFERENCES auth_user (id) ON DELETE CASCADE  '
@@ -64,7 +64,7 @@ I512
 sg5
 I00
 sg6
-I7
+I8
 sg7
 S'CHAR(1)'
 p22
@@ -81,7 +81,7 @@ I512
 sg5
 I00
 sg6
-I9
+I10
 sg7
 S'INTEGER REFERENCES auth_user (id) ON DELETE CASCADE  '
 p26
@@ -97,7 +97,7 @@ I512
 sg5
 I00
 sg6
-I10
+I11
 sg7
 S'TIMESTAMP'
 p29
@@ -114,7 +114,7 @@ I512
 sg5
 I00
 sg6
-I8
+I9
 sg7
 S'TIMESTAMP'
 p33
@@ -188,4 +188,20 @@ sg9
 I00
 sg10
 g45
+ssS'uuid'
+p48
+(dp49
+g4
+I64
+sg5
+I00
+sg6
+I7
+sg7
+S'CHAR(64)'
+p50
+sg9
+I00
+sg10
+g15
 ss.

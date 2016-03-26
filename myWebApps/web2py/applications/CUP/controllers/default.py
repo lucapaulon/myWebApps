@@ -8,16 +8,12 @@
 ## - download is for downloading files uploaded in the db (does streaming)
 #########################################################################
 
-def index():
-    """
-    example action using the internationalization operator T and flash
-    rendered by views/default/index.html or views/generic.html
+def index(): redirect(URL(r=request,c='default',f='home'))
 
-    if you need a simple wiki simply replace the two lines below with:
-    return auth.wiki()
-    """
-    response.flash = T("Ciao utente !")
-    return dict(message=T('Benvenuto al CUP online!'))
+def search():
+    form = SQLFORM.grid(db.Servizio, user_signature=True, deletable=False, details=False)
+    chart=bar_chart(data='1,2,3',names='a,b,c',width=300,height=150,align='center')
+    return dict(form=form, chart=chart)
 
 def user():
     """
@@ -56,22 +52,46 @@ def call():
     """
     return service()
 
+def home():
+    #T.set_current_languages('it')
+    homeTitle=T('Le tue richieste')
+    db.Prestazione.Servizio.writable = False
+    listOfLinks = [   lambda row: A('Vedi servizio '+str(db.Servizio[row.Servizio].id),_href=URL("crud","tabella_Servizio/view/Servizio",args=[row.Servizio])), 
+                lambda row: A('Vedi fornitore'+str(db.Fornitore[row.Fornitore].id),_href=URL("crud","tabella_Fornitore/view/Fornitore",args=[row.Fornitore]))]
+    grid = SQLFORM.smartgrid( 
+        db.Prestazione, 
+        user_signature=False, 
+        linked_tables=['Servizio'],
+        links=listOfLinks,
+        links_in_grid=True
+        )
+    #youtube = plugin_wiki.widget('youtube',code='l7AWnfFRc7g')
+    pie = plugin_wiki.widget('pie_chart',data='10,20,30',names='TAC,RNM,PET',width=300,height=150,align='center')
+    bar = plugin_wiki.widget('bar_chart',data='10,20,30',names='TAC,RNM,PET',width=300,height=150,align='center')
+    map = plugin_wiki.widget('map', key='AIzaSyD41CEtZdJ3YqUuisUrQEJgXZIPiV0_r50', table='Fornitore',width=800,height=400)
+    return locals() # dict(grid=grid)
 
-#def popdb():
-#    from gluon.contrib.populate import populate
-#    populate(db.auth_user,2)    
-#    output = ''
-#    for User in db(db.auth_user.id>0).select(limitby=(0,9)):
-#        output = output + ' User:' + User.email + ','+ User.first_name
-#    populate(db.Cliente,2)
-#    for Cliente in db(db.Cliente.id>0).select(limitby=(0,9)):
-#        output= output + ' Cliente:' + Cliente.nome
-#    return output
+def Servizio():
+    homeTitle=T('I servizi sanitari')
+    db.Prestazione.Servizio.writable = False
+    grid = SQLFORM.smartgrid( 
+        db.Servizio, 
+        user_signature=False, 
+        linked_tables=['Categoria_servizio'],
+        links = [lambda row: A(T('Seleziona'),_href=URL("default","showRecord",args=[row.id]))],
+        links_in_grid=True
+        )
+    return locals()
+
+def showRecord():
+    #request.vars
+    output = 'Record numero '+str(request.args[0])
+    return output
 
 from gluon.contrib.populate import populate
 def populate_db():
     output = ''
-    output = output + _populate_db_table('auth_user', db.auth_user, 2)    
+    #output = output + _populate_db_table('auth_user', db.auth_user, 2)    
     output = output + _populate_db_table('Cliente', db.Cliente, 2) 
     output = output + _populate_db_table('Fornitore', db.Fornitore, 2)  
     output = output + _populate_db_table('Categoria_servizio', db.Categoria_servizio, 2)    
@@ -142,10 +162,3 @@ def import_and_sync():
             finally:
                 print 'done'
     return dict(form=form)
-
-
-#for tableName in db.tables:
-#    if not tableName.startswith('auth_'): 
-#        continue
-#    else: 
-#        auth.settings.extra_fields[tableName]=[Field_uuid]
