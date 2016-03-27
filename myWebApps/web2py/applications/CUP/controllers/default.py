@@ -53,40 +53,48 @@ def call():
     return service()
 
 def home():
-    homeTitle=T('Le tue richieste')
+    pageTitle=T('Prestazioni richieste')
 
-    query = (db.Prestazione.is_active==True) #& (db.Prestazione.id>0)     rows = db(query).select(        db.Prestazione.ALL, db.Servizio.ALL,db.Cliente.ALL,        left=[db.Servizio.on(db.Prestazione.Servizio==db.Servizio.id), db.Cliente.on(db.Prestazione.Cliente==db.Cliente.id)])    tabella=''
-    for row in rows:
-        tabella = tabella + 'Prestazione del '+str(row.Prestazione.giorno)+': il cliente ' + str(row.Prestazione.Cliente) + ' ha eseguito il servizio '+ str(row.Servizio.nome)+'; '
- 
-    grid=SQLFORM.grid(db.Prestazione                        ,left=[db.Servizio.on(db.Prestazione.Servizio==db.Servizio.id), db.Cliente.on(db.Prestazione.Cliente==db.Cliente.id)]                        ,fields=[db.Prestazione.id,db.Prestazione.giorno,db.Cliente.nome                                ,db.Fornitore.nome                                ,db.Servizio.nome                                ,db.Servizio.descrizione]                        ,user_signature=False)    
-    #db.Prestazione.Servizio.writable = False
-    #listOfLinks = [   lambda row: A('Vedi servizio '+str(db.Servizio[row.Servizio].id),_href=URL("crud","tabella_Servizio/view/Servizio",args=[row.Servizio])), 
-    #            lambda row: A('Vedi fornitore'+str(db.Fornitore[row.Fornitore].id),_href=URL("crud","tabella_Fornitore/view/Fornitore",args=[row.Fornitore]))]
-    #grid = SQLFORM.smartgrid( 
-    #    Prestazioni,
-    #    user_signature=False, 
-    #    linked_tables=['Servizio'],
-    #    links=listOfLinks,
-    #    links_in_grid=True
-    #    )
-
-    #db.Prestazione.Servizio.writable = False
-    #listOfLinks = [   lambda row: A('Vedi servizio '+str(db.Servizio[row.Servizio].id),_href=URL("crud","tabella_Servizio/view/Servizio",args=[row.Servizio])), 
-    #            lambda row: A('Vedi fornitore'+str(db.Fornitore[row.Fornitore].id),_href=URL("crud","tabella_Fornitore/view/Fornitore",args=[row.Fornitore]))]
-    #grid = SQLFORM.smartgrid( 
-    #    db.Prestazione, constraints = dict (Prestazione=query),
-    #    user_signature=False, 
-    #    linked_tables=['Servizio'],
-    #    links=listOfLinks,
-    #    links_in_grid=True
-    #    )
+    links=[   lambda row: A('Dettagli prestazione', _href=URL("crud","tabella_Prestazione/view/Prestazione",args=[row.Prestazione.id]))
+            , lambda row: A('Dettagli servizio', _href=URL("crud","tabella_Servizio/view/Servizio",args=[row.Servizio.id]))
+            #, lambda row: A('Dettagli fornitore', _href=URL("crud","tabella_Fornitore/view/Fornitore",args=[row.Fornitore.id]))
+            , lambda row: A('Dettagli fornitore', _href=URL("default","fornitore",args=[row.Fornitore.id]))
+          ]
+    grid=SQLFORM.grid(db.Prestazione
+                        ,left=[db.Servizio.on(db.Prestazione.Servizio==db.Servizio.id), db.Cliente.on(db.Prestazione.Cliente==db.Cliente.id), db.Fornitore.on(db.Prestazione.Fornitore==db.Fornitore.id)]
+                        ,fields=[db.Cliente.nome
+                                ,db.Servizio.nome 
+                                ,db.Fornitore.nome 
+                                ,db.Prestazione.id,db.Prestazione.giorno       
+                                ,db.Servizio.descrizione, db.Servizio.id, db.Fornitore.id                         
+                                ]
+                        ,headers={'db.Prestazione.id':'Prestazione (id)', 'Prestazione.giorno':'Giorno', 'Cliente.nome':'Cliente','Fornitore.nome':'Fornitore (nome)','Fornitore.id':'Dettagli (id fornitore)','Servizio.nome':'Servizio (nome)','Servizio.id':'Dettagli (id servizio)','Servizio.descrizione':'Dettagli (descrizione servizio)'}
+                        ,links=links
+                        ,showbuttontext=False
+                        ,deletable=False
+                        ,editable = False  #PROVARE editable= [lambda row :  row.locked == 0] #https://groups.google.com/forum/#!searchin/web2py/SQLFORM.grid$20selectable/web2py/7Trx6afrNYI/T8K3k7TXcb8J
+                        ,details = True # bottone per vedere la prestazione; si disabilita se aggiungo un altro link per questo
+                        ,create = False
+                        ,selectable = None
+                        ,links_placement = 'left', buttons_placement = 'right'
+                        ,user_signature=False)
 
     #youtube = plugin_wiki.widget('youtube',code='l7AWnfFRc7g')
     pie = plugin_wiki.widget('pie_chart',data='10,20,30',names='TAC,RNM,PET',width=300,height=150,align='center')
     bar = plugin_wiki.widget('bar_chart',data='10,20,30',names='TAC,RNM,PET',width=300,height=150,align='center')
-    map = plugin_wiki.widget('map', key='AIzaSyD41CEtZdJ3YqUuisUrQEJgXZIPiV0_r50', table='Fornitore',width=800,height=400)
+    #map = plugin_wiki.widget('map', key='AIzaSyD41CEtZdJ3YqUuisUrQEJgXZIPiV0_r50', table='Fornitore',width=800,height=400)
     return locals() # dict(grid=grid)
+
+def fornitore():
+    pageTitle=T('Dettagli del fornitore')
+    id = request.args[0]
+    record = SQLTABLE(db(db['Fornitore']['id']==id).select()
+                        ,fields=[db.Fornitore.nome,db.Fornitore.codice] #NON FUNZIONA
+                        )
+    #form='FORM'
+    table='Fornitore' # QUI BISOGNA USARE UNA TABELLA DI APPOGGIO FILTRATA DA Fornitore PER id  
+    map = plugin_wiki.widget('map', key='AIzaSyD41CEtZdJ3YqUuisUrQEJgXZIPiV0_r50', table=table,width=800,height=400)
+    return locals()
 
 def Servizio():
     homeTitle=T('I servizi sanitari')

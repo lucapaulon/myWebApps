@@ -972,8 +972,7 @@
     <Content Include="web2py\applications\CUP\cron\crontab" />
     <Content Include="web2py\applications\CUP\cron\crontab.example" />
     <Content Include="web2py\applications\CUP\LICENSE" />
-    <Content Include="web2py\applications\CUP\models\ER.html" />
-    <Content Include="web2py\applications\CUP\models\ER2.html" />
+    <Content Include="web2py\applications\CUP\models\exportDB" />
     <Content Include="web2py\applications\CUP\modules\__init__.pyc" />
     <Content Include="web2py\applications\CUP\private\appconfig.ini" />
     <Content Include="web2py\applications\CUP\static\403.html" />
@@ -1004,6 +1003,7 @@
     <Content Include="web2py\applications\CUP\static\js\web2py-bootstrap3.js" />
     <Content Include="web2py\applications\CUP\static\js\web2py.js" />
     <Content Include="web2py\applications\CUP\views\appadmin.html" />
+    <Content Include="web2py\applications\CUP\views\default\fornitore.html" />
     <Content Include="web2py\applications\CUP\views\default\index.html" />
     <Content Include="web2py\applications\CUP\views\default\home.html" />
     <Content Include="web2py\applications\CUP\views\default\user.html" />
