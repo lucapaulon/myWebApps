@@ -60,25 +60,26 @@ def home():
             #, lambda row: A('Dettagli fornitore', _href=URL("crud","tabella_Fornitore/view/Fornitore",args=[row.Fornitore.id]))
             , lambda row: A('Dettagli fornitore', _href=URL("default","fornitore",args=[row.Fornitore.id]))
           ]
-    grid=SQLFORM.grid(db.Prestazione
-                        ,left=[db.Servizio.on(db.Prestazione.Servizio==db.Servizio.id), db.Cliente.on(db.Prestazione.Cliente==db.Cliente.id), db.Fornitore.on(db.Prestazione.Fornitore==db.Fornitore.id)]
-                        ,fields=[db.Cliente.nome
-                                ,db.Servizio.nome 
-                                ,db.Fornitore.nome 
-                                ,db.Prestazione.id,db.Prestazione.giorno       
-                                ,db.Servizio.descrizione, db.Servizio.id, db.Fornitore.id                         
-                                ]
-                        ,headers={'db.Prestazione.id':'Prestazione (id)', 'Prestazione.giorno':'Giorno', 'Cliente.nome':'Cliente','Fornitore.nome':'Fornitore (nome)','Fornitore.id':'Dettagli (id fornitore)','Servizio.nome':'Servizio (nome)','Servizio.id':'Dettagli (id servizio)','Servizio.descrizione':'Dettagli (descrizione servizio)'}
-                        ,links=links
-                        ,showbuttontext=False
-                        ,deletable=False
-                        ,editable = False  #PROVARE editable= [lambda row :  row.locked == 0] #https://groups.google.com/forum/#!searchin/web2py/SQLFORM.grid$20selectable/web2py/7Trx6afrNYI/T8K3k7TXcb8J
-                        ,details = True # bottone per vedere la prestazione; si disabilita se aggiungo un altro link per questo
-                        ,create = False
-                        ,selectable = None
-                        ,links_placement = 'left', buttons_placement = 'right'
-                        ,user_signature=False)
-
+    query = ((db.Prestazione.is_active==True) & (db.Prestazione.created_by==auth.user_id)) if request.get_vars.keywords else (db.Prestazione.id==0)
+    grid=SQLFORM.grid(query
+                    ,left=[db.Servizio.on(db.Prestazione.Servizio==db.Servizio.id), db.Cliente.on(db.Prestazione.Cliente==db.Cliente.id), db.Fornitore.on(db.Prestazione.Fornitore==db.Fornitore.id)]
+                    ,fields=[db.Cliente.nome
+                            ,db.Servizio.nome 
+                            ,db.Fornitore.nome 
+                            ,db.Prestazione.id,db.Prestazione.giorno       
+                            ,db.Servizio.descrizione, db.Servizio.id, db.Fornitore.id                         
+                            ]
+                    ,headers={'db.Prestazione.id':'Prestazione (id)', 'Prestazione.giorno':'Giorno', 'Cliente.nome':'Cliente','Fornitore.nome':'Fornitore (nome)','Fornitore.id':'Dettagli (id fornitore)','Servizio.nome':'Servizio (nome)','Servizio.id':'Dettagli (id servizio)','Servizio.descrizione':'Dettagli (descrizione servizio)'}
+                    ,links=links
+                    ,showbuttontext=False
+                    ,deletable=False
+                    ,editable = False  #PROVARE editable= [lambda row :  row.locked == 0] #https://groups.google.com/forum/#!searchin/web2py/SQLFORM.grid$20selectable/web2py/7Trx6afrNYI/T8K3k7TXcb8J
+                    ,details = False # bottone per vedere la prestazione; si disabilita se aggiungo un altro link per questo
+                    ,create = False
+                    ,selectable = None
+                    ,links_placement = 'right', buttons_placement = 'right'
+                    ,user_signature=False
+                    ,csv=False)
     #youtube = plugin_wiki.widget('youtube',code='l7AWnfFRc7g')
     pie = plugin_wiki.widget('pie_chart',data='10,20,30',names='TAC,RNM,PET',width=300,height=150,align='center')
     bar = plugin_wiki.widget('bar_chart',data='10,20,30',names='TAC,RNM,PET',width=300,height=150,align='center')
@@ -88,13 +89,71 @@ def home():
 def fornitore():
     pageTitle=T('Dettagli del fornitore')
     id = request.args[0]
-    record = SQLTABLE(db(db['Fornitore']['id']==id).select()
-                        ,fields=[db.Fornitore.nome,db.Fornitore.codice] #NON FUNZIONA
-                        )
-    #form='FORM'
-    table='Fornitore' # QUI BISOGNA USARE UNA TABELLA DI APPOGGIO FILTRATA DA Fornitore PER id  
-    map = plugin_wiki.widget('map', key='AIzaSyD41CEtZdJ3YqUuisUrQEJgXZIPiV0_r50', table=table,width=800,height=400)
+    query = (db.Fornitore.is_active==True) & (db.Fornitore.id==id)
+    grid=SQLFORM.grid(query
+                    ,fields=[db.Fornitore.nome 
+                            ,db.Fornitore.id                         
+                            ]
+                    ,headers={'Fornitore.nome':'Fornitore (nome)','Fornitore.id':'Dettagli (id fornitore)'}
+                    ,showbuttontext=False
+                    ,deletable=False
+                    ,editable = False  #PROVARE editable= [lambda row :  row.locked == 0] #https://groups.google.com/forum/#!searchin/web2py/SQLFORM.grid$20selectable/web2py/7Trx6afrNYI/T8K3k7TXcb8J
+                    ,details = False
+                    ,create = False
+                    ,selectable = None
+                    ,links_placement = 'right', buttons_placement = 'right'
+                    ,user_signature=False
+                    ,csv=False
+                    ,searchable=False)                   
+    map = _map()
+    latitude=42;
+    longitude=12;
+    map_popup = 'prova'
+    myMap = '''
+        <script src="http://maps.google.com/maps?file=api&amp;v=2&amp;key=AIzaSyD41CEtZdJ3YqUuisUrQEJgXZIPiV0_r50" type="text/javascript"></script>
+        <script type="text/javascript">
+            //<![CDATA[
+            function load() {
+                if (GBrowserIsCompatible()) {
+                    var map = new GMap2(document.getElementById("map"));
+                    map.addControl(new GSmallMapControl());
+                    map.addControl(new GMapTypeControl());
+                    map.setCenter(new GLatLng({{=latitude}},{{=longitude}}), 1);
+                    // Create a base icon for all of our markers that specifies the
+                    // shadow, icon dimensions, etc.
+                    var blueIcon = new GIcon();
+                    blueIcon.image = "http://www.google.com/intl/en_us/mapfiles/ms/micons/blue-dot.png";
+                    blueIcon.shadow = "http://www.google.com/mapfiles/shadow50.png";
+                    blueIcon.iconSize = new GSize(37, 34);
+                    blueIcon.shadowSize = new GSize(37, 34);
+                    blueIcon.iconAnchor = new GPoint(9, 34);
+                    blueIcon.infoWindowAnchor = new GPoint(9, 2);
+                    blueIcon.infoShadowAnchor = new GPoint(18, 14);
+                    function createMarker(point, i, message) {
+                        // Set up our GMarkerOptions object
+                        if(i==0) markerOptions = { icon:blueIcon };
+                        else markerOptions= {}
+                        var marker = new GMarker(point, markerOptions);
+                        GEvent.addListener(marker, "click", function() {
+                            marker.openInfoWindowHtml(message);
+                        });
+                        return marker;
+                    }
+
+                    var point = new GLatLng({{latitude}},{{longitude}});
+                    map.addOverlay(createMarker(point, 0, {{=map_popup}}));
+                }
+            }
+            //]]>
+        </script>
+        <div id="map" style="width: 800px; height: 400px"> MAPPA </div>
+        <script>load();</script>
+    '''
     return locals()
+
+def _map(table='Fornitore'): # IL WIDGET NON VA BENE PERCHE' LEGGE SU UNA TABELLA DEL DB NON FILTRATA 
+    map = plugin_wiki.widget('map', key='AIzaSyD41CEtZdJ3YqUuisUrQEJgXZIPiV0_r50', table=table,width=800,height=400)
+    return map
 
 def Servizio():
     homeTitle=T('I servizi sanitari')
