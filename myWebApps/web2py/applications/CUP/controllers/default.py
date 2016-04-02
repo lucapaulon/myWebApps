@@ -8,7 +8,7 @@
 ## - download is for downloading files uploaded in the db (does streaming)
 #########################################################################
 
-def index(): redirect(URL(r=request,c='default',f='home'))
+def index(): redirect(URL(r=request,c='default',f='archivio_richieste'))
 
 def search():
     form = SQLFORM.grid(db.Servizio, user_signature=True, deletable=False, details=False)
@@ -52,14 +52,14 @@ def call():
     """
     return service()
 
-def home():
-    pageTitle=T('Prestazioni (richieste)')
-
-    links=[   lambda row: A('Dettagli prestazione', _href=URL("crud","tabella_Prestazione/view/Prestazione",args=[row.Prestazione.id]))
-            , lambda row: A('Dettagli servizio', _href=URL("crud","tabella_Servizio/view/Servizio",args=[row.Servizio.id]))
+def archivio_richieste():
+    pageTitle=T('Archivio delle richieste')
+    if session.flash: response.flash = session.flash
+    links=[   lambda row: A('Dettagli richiesta', _href=URL("default","tabella_Prestazione/view/Prestazione",args=[row.Prestazione.id]))
+            , lambda row: A('Dettagli servizio', _href=URL("default","tabella_Servizio/view/Servizio",args=[row.Servizio.id]))
             #, lambda row: A('Dettagli fornitore', _href=URL("crud","tabella_Fornitore/view/Fornitore",args=[row.Fornitore.id]))
-            , lambda row: A('Dettagli fornitore', _href=URL("default","fornitore",args=[row.Fornitore.id]))
-            , lambda row: A('Edit fornitore', _href=URL("default","edit_fornitore",args=[row.Fornitore.id]))
+            , lambda row: A('Dettagli fornitore', _href=URL("default","visualizza_dettagli_fornitore",args=[row.Fornitore.id]))
+            , lambda row: A('Modifica dettagli fornitore', _href=URL("default","modifica_dettagli_fornitore",args=[row.Fornitore.id]))
           ]
     
     query = ((db.Prestazione.is_active==True) & (db.Prestazione.created_by==auth.user_id)) if request.get_vars.keywords else (db.Prestazione.id==0)                                        
@@ -77,7 +77,7 @@ def home():
                     ,deletable=False
                     ,editable = False  #PROVARE editable= [lambda row :  row.locked == 0] #https://groups.google.com/forum/#!searchin/web2py/SQLFORM.grid$20selectable/web2py/7Trx6afrNYI/T8K3k7TXcb8J
                     ,details = False # bottone per vedere la prestazione; si disabilita se aggiungo un altro link per questo
-                    ,create = True
+                    ,create = False
                     ,selectable = None
                     ,links_placement = 'right', buttons_placement = 'right'
                     ,user_signature=False
@@ -88,7 +88,7 @@ def home():
     #map = plugin_wiki.widget('map', key='AIzaSyD41CEtZdJ3YqUuisUrQEJgXZIPiV0_r50', table='Fornitore',width=800,height=400)
     return locals() # dict(grid=grid)
 
-def fornitore():
+def visualizza_dettagli_fornitore():
     pageTitle=T('Dettagli del fornitore')
     id = request.args[0]
     session.fornitore = id
@@ -115,7 +115,7 @@ def fornitore():
     map_popup = rows[0].map_popup
     return locals()
 
-def edit_fornitore():
+def modifica_dettagli_fornitore():
     pageTitle=T('Edit del fornitore')
     id = session.fornitore
     query = (db.Fornitore.is_active==True) & (db.Fornitore.id==id)
@@ -124,35 +124,46 @@ def edit_fornitore():
     form = SQLFORM(db.Fornitore,record)
     if form.validate():
         if form.deleted:
-            db(db.person.id==record.id).delete()
+            db(db.Fornitore.id==record.id).delete()
         else:
             form.record.update_record(**dict(form.vars))
         response.flash = 'record updated'
 
     return dict(form=form)
 
-def insert_fornitore():
-    pageTitle=T('Insert del fornitore')
-    form = SQLFORM(db.Fornitore)
-    form.vars.descrizione='nuovo inserito'
-    form.vars.auth_user=2
-    if form.validate():
-        session.richiesta=form.vars
-        redirect(URL('confirm_insert'))
+def nuova_richiesta():
+    pageTitle=T('Nuova richiesta di prestazione')
+    if session.flash: response.flash = session.flash
+    form_richiesta = SQLFORM(db.Prestazione)
+    if session.richiesta: form_richiesta.vars = session.richiesta   
+    if form_richiesta.validate():
+        session.richiesta=form_richiesta.vars
+        session.flash = None
+        redirect(URL('conferma_richiesta'))
         ### deal with uploads explicitly
+    #elif session.richiesta:
+    #    form.vars = session.richiesta       
+    #else:
+    #    form.vars.descrizione='nuovo'
+    #    form.vars.auth_user=2   
+    return dict(form_richiesta=form_richiesta)
 
-    
-
-    return dict(form=form)
-
-def confirm_insert():
-    form = FORM.confirm('Are you sure?')
-    if form.accepted:
-        session.richiesta.id = db.Fornitore.insert(**dict(session.richiesta))
-        response.flash = 'record inserted'
-    else:
-        redirect(URL('insert_fornitore'))     
-    return dict (form=form)
+def conferma_richiesta():
+    richiesta = session.richiesta
+    form_confirm = FORM.confirm('Confermo',{'Non confermo':URL('nuova_richiesta')})
+    if form_confirm.accepted:
+        id = richiesta.id
+        if id:
+            #db.Fornitore.update(**dict(richiesta))
+            db(db['Prestazione']._id==id).update(**dict(richiesta))
+            session.flash = T('Richiesta salvata')   
+            session.richiesta = None
+        else:
+            session.richiesta.id = db.Prestazione.insert(**dict(richiesta))
+            session.flash = T('Richiesta salvata')      
+            session.richiesta = None 
+        redirect(URL('archivio_richieste'))          
+    return dict (richiesta=richiesta, form_confirm=form_confirm)
 
 def _map(table='Fornitore'): # IL WIDGET NON VA BENE PERCHE' LEGGE SU UNA TABELLA DEL DB NON FILTRATA 
     map = plugin_wiki.widget('map', key='AIzaSyD41CEtZdJ3YqUuisUrQEJgXZIPiV0_r50', table=table,width=800,height=400)
@@ -249,3 +260,39 @@ def import_and_sync():
             finally:
                 print 'done'
     return dict(form=form)
+
+
+######################################## crud
+
+
+tabelle= [tn for tn in db.tables if not (tn.endswith('_archive') or tn.startswith('auth_'))  ]
+response.menu = [
+        (T('Nuova richiesta'), False, URL('default', 'nuova_richiesta'), []),
+        (T('Archivio richieste'), False, URL('default', 'archivio_richieste'), []),
+        (T('My Tables'), False, '#',
+             [ (T(tn), False, URL('default', 'tabella_%s' % tn) ) for tn in tabelle ])
+    ]
+
+
+def index():
+    return dict(message=T("CUP Online. Lavori in corso"))
+
+def tabella_Categoria_servizio():return dict(grid=SQLFORM.grid( db.Categoria_servizio, user_signature=False) )
+def tabella_Stato_prestazione():return dict(grid=SQLFORM.grid( db.Stato_prestazione, user_signature=False) )
+def tabella_Cliente():return dict(grid=SQLFORM.grid( db.Cliente, user_signature=True) )
+def tabella_Fornitore():return dict(grid=SQLFORM.grid( db.Fornitore, user_signature=False) )
+def tabella_Servizio():return dict(grid=SQLFORM.grid( db.Servizio, user_signature=False) )
+def tabella_Prestazione():return dict(grid=SQLFORM.grid( db.Prestazione, user_signature=False) )
+def tabella_Servizio_disponibile():return dict(grid=SQLFORM.grid( db.Servizio_disponibile, user_signature=False) )
+def tabella_Soddisfazione():return dict(grid=SQLFORM.grid( db.Soddisfazione, user_signature=False) )
+
+def test():
+    config=dict(color='black', language='English')
+    form = SQLFORM.dictform(config)
+    #if form.process().accepted:
+     #   session.config.update(form.vars)
+    return dict(form=form)
+
+def session_form_richiesta_none():
+    session.form_richiesta = None
+    return None
