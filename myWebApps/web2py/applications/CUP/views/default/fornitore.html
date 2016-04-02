@@ -9,7 +9,7 @@
                     var map = new GMap2(document.getElementById("map"));
                     map.addControl(new GSmallMapControl());
                     map.addControl(new GMapTypeControl());
-                    map.setCenter(new GLatLng({{=latitude}},{{=longitude}}), 1);
+                    map.setCenter(new GLatLng({{=latitude}},{{=longitude}}), 15);
                     // Create a base icon for all of our markers that specifies the
                     // shadow, icon dimensions, etc.
                     var blueIcon = new GIcon();
@@ -31,8 +31,8 @@
                         return marker;
                     }
 
-                    var point = new GLatLng({{latitude}},{{longitude}});
-                    map.addOverlay(createMarker(point, 0, {{=map_popup}}));
+                    var point = new GLatLng({{=latitude}},{{=longitude}});
+                    map.addOverlay(createMarker(point, 0, "{{=map_popup}}"));
                 }
             }
             //]]>

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-response.generic_patterns = ['crud/*'] #abilita le view generiche
+#response.generic_patterns = ['crud/*'] #abilita le view generiche
 
 #from gluon.tools import Crud
 #crud = Crud(db)
@@ -24,3 +24,10 @@ def tabella_Servizio():return dict(grid=SQLFORM.grid( db.Servizio, user_signatur
 def tabella_Prestazione():return dict(grid=SQLFORM.grid( db.Prestazione, user_signature=False) )
 def tabella_Servizio_disponibile():return dict(grid=SQLFORM.grid( db.Servizio_disponibile, user_signature=False) )
 def tabella_Soddisfazione():return dict(grid=SQLFORM.grid( db.Soddisfazione, user_signature=False) )
+
+def test():
+    config=dict(color='black', language='English')
+    form = SQLFORM.dictform(config)
+    #if form.process().accepted:
+     #   session.config.update(form.vars)
+    return dict(form=form)

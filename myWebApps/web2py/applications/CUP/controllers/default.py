@@ -53,14 +53,16 @@ def call():
     return service()
 
 def home():
-    pageTitle=T('Prestazioni richieste')
+    pageTitle=T('Prestazioni (richieste)')
 
     links=[   lambda row: A('Dettagli prestazione', _href=URL("crud","tabella_Prestazione/view/Prestazione",args=[row.Prestazione.id]))
             , lambda row: A('Dettagli servizio', _href=URL("crud","tabella_Servizio/view/Servizio",args=[row.Servizio.id]))
             #, lambda row: A('Dettagli fornitore', _href=URL("crud","tabella_Fornitore/view/Fornitore",args=[row.Fornitore.id]))
             , lambda row: A('Dettagli fornitore', _href=URL("default","fornitore",args=[row.Fornitore.id]))
+            , lambda row: A('Edit fornitore', _href=URL("default","edit_fornitore",args=[row.Fornitore.id]))
           ]
-    query = ((db.Prestazione.is_active==True) & (db.Prestazione.created_by==auth.user_id)) if request.get_vars.keywords else (db.Prestazione.id==0)
+    
+    query = ((db.Prestazione.is_active==True) & (db.Prestazione.created_by==auth.user_id)) if request.get_vars.keywords else (db.Prestazione.id==0)                                        
     grid=SQLFORM.grid(query
                     ,left=[db.Servizio.on(db.Prestazione.Servizio==db.Servizio.id), db.Cliente.on(db.Prestazione.Cliente==db.Cliente.id), db.Fornitore.on(db.Prestazione.Fornitore==db.Fornitore.id)]
                     ,fields=[db.Cliente.nome
@@ -75,7 +77,7 @@ def home():
                     ,deletable=False
                     ,editable = False  #PROVARE editable= [lambda row :  row.locked == 0] #https://groups.google.com/forum/#!searchin/web2py/SQLFORM.grid$20selectable/web2py/7Trx6afrNYI/T8K3k7TXcb8J
                     ,details = False # bottone per vedere la prestazione; si disabilita se aggiungo un altro link per questo
-                    ,create = False
+                    ,create = True
                     ,selectable = None
                     ,links_placement = 'right', buttons_placement = 'right'
                     ,user_signature=False
@@ -89,7 +91,9 @@ def home():
 def fornitore():
     pageTitle=T('Dettagli del fornitore')
     id = request.args[0]
+    session.fornitore = id
     query = (db.Fornitore.is_active==True) & (db.Fornitore.id==id)
+    rows = db(query).select()
     grid=SQLFORM.grid(query
                     ,fields=[db.Fornitore.nome 
                             ,db.Fornitore.id                         
@@ -106,50 +110,49 @@ def fornitore():
                     ,csv=False
                     ,searchable=False)                   
     map = _map()
-    latitude=42;
-    longitude=12;
-    map_popup = 'prova'
-    myMap = '''
-        <script src="http://maps.google.com/maps?file=api&amp;v=2&amp;key=AIzaSyD41CEtZdJ3YqUuisUrQEJgXZIPiV0_r50" type="text/javascript"></script>
-        <script type="text/javascript">
-            //<![CDATA[
-            function load() {
-                if (GBrowserIsCompatible()) {
-                    var map = new GMap2(document.getElementById("map"));
-                    map.addControl(new GSmallMapControl());
-                    map.addControl(new GMapTypeControl());
-                    map.setCenter(new GLatLng({{=latitude}},{{=longitude}}), 1);
-                    // Create a base icon for all of our markers that specifies the
-                    // shadow, icon dimensions, etc.
-                    var blueIcon = new GIcon();
-                    blueIcon.image = "http://www.google.com/intl/en_us/mapfiles/ms/micons/blue-dot.png";
-                    blueIcon.shadow = "http://www.google.com/mapfiles/shadow50.png";
-                    blueIcon.iconSize = new GSize(37, 34);
-                    blueIcon.shadowSize = new GSize(37, 34);
-                    blueIcon.iconAnchor = new GPoint(9, 34);
-                    blueIcon.infoWindowAnchor = new GPoint(9, 2);
-                    blueIcon.infoShadowAnchor = new GPoint(18, 14);
-                    function createMarker(point, i, message) {
-                        // Set up our GMarkerOptions object
-                        if(i==0) markerOptions = { icon:blueIcon };
-                        else markerOptions= {}
-                        var marker = new GMarker(point, markerOptions);
-                        GEvent.addListener(marker, "click", function() {
-                            marker.openInfoWindowHtml(message);
-                        });
-                        return marker;
-                    }
-
-                    var point = new GLatLng({{latitude}},{{longitude}});
-                    map.addOverlay(createMarker(point, 0, {{=map_popup}}));
-                }
-            }
-            //]]>
-        </script>
-        <div id="map" style="width: 800px; height: 400px"> MAPPA </div>
-        <script>load();</script>
-    '''
+    latitude=rows[0].latitude
+    longitude=rows[0].longitude
+    map_popup = rows[0].map_popup
     return locals()
+
+def edit_fornitore():
+    pageTitle=T('Edit del fornitore')
+    id = session.fornitore
+    query = (db.Fornitore.is_active==True) & (db.Fornitore.id==id)
+    rows = db(query).select()
+    record = rows[0]
+    form = SQLFORM(db.Fornitore,record)
+    if form.validate():
+        if form.deleted:
+            db(db.person.id==record.id).delete()
+        else:
+            form.record.update_record(**dict(form.vars))
+        response.flash = 'record updated'
+
+    return dict(form=form)
+
+def insert_fornitore():
+    pageTitle=T('Insert del fornitore')
+    form = SQLFORM(db.Fornitore)
+    form.vars.descrizione='nuovo inserito'
+    form.vars.auth_user=2
+    if form.validate():
+        session.richiesta=form.vars
+        redirect(URL('confirm_insert'))
+        ### deal with uploads explicitly
+
+    
+
+    return dict(form=form)
+
+def confirm_insert():
+    form = FORM.confirm('Are you sure?')
+    if form.accepted:
+        session.richiesta.id = db.Fornitore.insert(**dict(session.richiesta))
+        response.flash = 'record inserted'
+    else:
+        redirect(URL('insert_fornitore'))     
+    return dict (form=form)
 
 def _map(table='Fornitore'): # IL WIDGET NON VA BENE PERCHE' LEGGE SU UNA TABELLA DEL DB NON FILTRATA 
     map = plugin_wiki.widget('map', key='AIzaSyD41CEtZdJ3YqUuisUrQEJgXZIPiV0_r50', table=table,width=800,height=400)
