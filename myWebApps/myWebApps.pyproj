@@ -17,7 +17,7 @@
     <Name>myWebApps</Name>
     <RootNamespace>myWebApps</RootNamespace>
     <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
-    <CommandLineArguments>-p 8080 -i localhost -a "1234"</CommandLineArguments>
+    <CommandLineArguments>-p 8080 -i 192.168.1.100 -a "1234"</CommandLineArguments>
     <InterpreterArguments>
     </InterpreterArguments>
     <WebBrowserUrl>
@@ -1003,6 +1003,16 @@
     <Content Include="web2py\applications\CUP\static\js\web2py-bootstrap3.js" />
     <Content Include="web2py\applications\CUP\static\js\web2py.js" />
     <Content Include="web2py\applications\CUP\views\appadmin.html" />
+    <Content Include="web2py\applications\CUP\views\default\conferma_richiesta.html" />
+    <Content Include="web2py\applications\CUP\views\default\gestione_Categoria_servizio.html" />
+    <Content Include="web2py\applications\CUP\views\default\gestione_Cliente.html" />
+    <Content Include="web2py\applications\CUP\views\default\gestione_Fornitore.html" />
+    <Content Include="web2py\applications\CUP\views\default\gestione_Prestazione.html" />
+    <Content Include="web2py\applications\CUP\views\default\gestione_Servizio.html" />
+    <Content Include="web2py\applications\CUP\views\default\gestione_Soddisfazione.html" />
+    <Content Include="web2py\applications\CUP\views\default\gestione_Stato_prestazione.html" />
+    <Content Include="web2py\applications\CUP\views\default\nuova_richiesta.html" />
+    <Content Include="web2py\applications\CUP\views\default\gestione_Servizio_disponibile.html" />
     <Content Include="web2py\applications\CUP\views\default\visualizza_dettagli_fornitore.html" />
     <Content Include="web2py\applications\CUP\views\default\index.html" />
     <Content Include="web2py\applications\CUP\views\default\archivio_richieste.html" />

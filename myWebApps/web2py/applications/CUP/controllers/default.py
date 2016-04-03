@@ -8,7 +8,10 @@
 ## - download is for downloading files uploaded in the db (does streaming)
 #########################################################################
 
-def index(): redirect(URL(r=request,c='default',f='archivio_richieste'))
+#def index(): redirect(URL(r=request,c='default',f='archivio_richieste'))
+def index(): 
+    response.title = T('CUPONLINE Servizi Sanitari')
+    return dict(message=T(""))
 
 def search():
     form = SQLFORM.grid(db.Servizio, user_signature=True, deletable=False, details=False)
@@ -88,6 +91,42 @@ def archivio_richieste():
     #map = plugin_wiki.widget('map', key='AIzaSyD41CEtZdJ3YqUuisUrQEJgXZIPiV0_r50', table='Fornitore',width=800,height=400)
     return locals() # dict(grid=grid)
 
+def nuova_richiesta():
+    pageTitle=T('Nuova richiesta')
+    if session.flash: response.flash = session.flash
+    form_richiesta = SQLFORM(db.Prestazione)
+    if session.richiesta: form_richiesta.vars = session.richiesta   
+    if form_richiesta.validate():
+        session.richiesta=form_richiesta.vars
+        session.flash = None
+        redirect(URL('conferma_richiesta'))
+        ### deal with uploads explicitly
+    #elif session.richiesta:
+    #    form.vars = session.richiesta       
+    #else:
+    #    form.vars.descrizione='nuovo'
+    #    form.vars.auth_user=2   
+    return dict(pageTitle=pageTitle, form_richiesta=form_richiesta)
+
+def conferma_richiesta():
+    pageTitle=T('Confermi la richiesta ?')
+    richiesta = session.richiesta
+    form_confirm = FORM.confirm(T('Sì'),{T('No'):URL('nuova_richiesta')})
+    if form_confirm.accepted:
+        id = richiesta.id
+        if id:
+            #db.Fornitore.update(**dict(richiesta))
+            db(db['Prestazione']._id==id).update(**dict(richiesta))
+            session.flash = T('Richiesta salvata')   
+            session.richiesta = None
+        else:
+            session.richiesta.id = db.Prestazione.insert(**dict(richiesta))
+            session.flash = T('Richiesta salvata')      
+            session.richiesta = None 
+        redirect(URL('archivio_richieste'))          
+    return dict (pageTitle=pageTitle,richiesta=richiesta, form_confirm=form_confirm)
+
+
 def visualizza_dettagli_fornitore():
     pageTitle=T('Dettagli del fornitore')
     id = request.args[0]
@@ -130,40 +169,6 @@ def modifica_dettagli_fornitore():
         response.flash = 'record updated'
 
     return dict(form=form)
-
-def nuova_richiesta():
-    pageTitle=T('Nuova richiesta di prestazione')
-    if session.flash: response.flash = session.flash
-    form_richiesta = SQLFORM(db.Prestazione)
-    if session.richiesta: form_richiesta.vars = session.richiesta   
-    if form_richiesta.validate():
-        session.richiesta=form_richiesta.vars
-        session.flash = None
-        redirect(URL('conferma_richiesta'))
-        ### deal with uploads explicitly
-    #elif session.richiesta:
-    #    form.vars = session.richiesta       
-    #else:
-    #    form.vars.descrizione='nuovo'
-    #    form.vars.auth_user=2   
-    return dict(form_richiesta=form_richiesta)
-
-def conferma_richiesta():
-    richiesta = session.richiesta
-    form_confirm = FORM.confirm('Confermo',{'Non confermo':URL('nuova_richiesta')})
-    if form_confirm.accepted:
-        id = richiesta.id
-        if id:
-            #db.Fornitore.update(**dict(richiesta))
-            db(db['Prestazione']._id==id).update(**dict(richiesta))
-            session.flash = T('Richiesta salvata')   
-            session.richiesta = None
-        else:
-            session.richiesta.id = db.Prestazione.insert(**dict(richiesta))
-            session.flash = T('Richiesta salvata')      
-            session.richiesta = None 
-        redirect(URL('archivio_richieste'))          
-    return dict (richiesta=richiesta, form_confirm=form_confirm)
 
 def _map(table='Fornitore'): # IL WIDGET NON VA BENE PERCHE' LEGGE SU UNA TABELLA DEL DB NON FILTRATA 
     map = plugin_wiki.widget('map', key='AIzaSyD41CEtZdJ3YqUuisUrQEJgXZIPiV0_r50', table=table,width=800,height=400)
@@ -265,26 +270,37 @@ def import_and_sync():
 ######################################## crud
 
 
-tabelle= [tn for tn in db.tables if not (tn.endswith('_archive') or tn.startswith('auth_'))  ]
+tabelle= [tn for tn in db.tables if not (tn.endswith('_archive') or tn.startswith('auth_') or tn.startswith('plugin_'))  ]
 response.menu = [
-        (T('Nuova richiesta'), False, URL('default', 'nuova_richiesta'), []),
-        (T('Archivio richieste'), False, URL('default', 'archivio_richieste'), []),
-        (T('My Tables'), False, '#',
-             [ (T(tn), False, URL('default', 'tabella_%s' % tn) ) for tn in tabelle ])
-    ]
+                    (T('Nuova richiesta'), False, URL('default', 'nuova_richiesta'), [])
+                    ,(T('Servizi'), False, URL('default', 'gestione_Servizio'), [])
+                    ,(T('Fornitori'), False, URL('default', 'gestione_Fornitore'), [])
+                    ,(T('Clienti'), False, URL('default', 'gestione_Cliente'), [])
+                    ,(T('Archivio richieste'), False, URL('default', 'archivio_richieste'), [])
+                    ,(T('HQ'), False, '#',
+                                            [ (T(tn), False, URL('default', 'gestione_%s' % tn) ) for tn in tabelle ])
+                    #,(T('R&S'), False, '#',
+                    #                        [ 
+                    #                            (T('Sito sviluppo applicazione'), False, URL('admin','design','CUP'), []),
+                    #                            (T('Crea gruppi CUP'), False, URL('default','crea_gruppi_CUP'), [])
+                    #                        ])            
+                ]
 
 
-def index():
-    return dict(message=T("CUP Online. Lavori in corso"))
 
-def tabella_Categoria_servizio():return dict(grid=SQLFORM.grid( db.Categoria_servizio, user_signature=False) )
-def tabella_Stato_prestazione():return dict(grid=SQLFORM.grid( db.Stato_prestazione, user_signature=False) )
-def tabella_Cliente():return dict(grid=SQLFORM.grid( db.Cliente, user_signature=True) )
-def tabella_Fornitore():return dict(grid=SQLFORM.grid( db.Fornitore, user_signature=False) )
-def tabella_Servizio():return dict(grid=SQLFORM.grid( db.Servizio, user_signature=False) )
-def tabella_Prestazione():return dict(grid=SQLFORM.grid( db.Prestazione, user_signature=False) )
-def tabella_Servizio_disponibile():return dict(grid=SQLFORM.grid( db.Servizio_disponibile, user_signature=False) )
-def tabella_Soddisfazione():return dict(grid=SQLFORM.grid( db.Soddisfazione, user_signature=False) )
+def gestione_Categoria_servizio():return _gestione_tabella('Categoria_servizio') #SQLFORM.grid( db.Categoria_servizio, user_signature=False) )
+def gestione_Stato_prestazione():return _gestione_tabella('Stato_prestazione')
+def gestione_Cliente():return _gestione_tabella('Cliente')
+def gestione_Fornitore():return _gestione_tabella('Fornitore')
+def gestione_Servizio():return _gestione_tabella('Servizio')
+def gestione_Prestazione():return _gestione_tabella('Prestazione')
+def gestione_Servizio_disponibile():return _gestione_tabella('Servizio_disponibile')
+def gestione_Soddisfazione():return _gestione_tabella('Soddisfazione')
+
+def _gestione_tabella(tableName):
+    pageTitle=T('Gestione '+tableName)
+    grid=SQLFORM.grid( db[tableName], user_signature=False) 
+    return dict(grid=grid, pageTitle=pageTitle)
 
 def test():
     config=dict(color='black', language='English')
@@ -293,6 +309,18 @@ def test():
      #   session.config.update(form.vars)
     return dict(form=form)
 
-def session_form_richiesta_none():
-    session.form_richiesta = None
-    return None
+@auth.requires(auth.has_membership(role='Sviluppatore'))
+def crea_gruppi_CUP():
+    groups ='''
+        Cliente
+        Fornitore
+        Amministratore
+    '''.split()
+    for group in groups:  
+        auth.add_group(group, T(group)) 
+
+    #auth.add_group('Cliente', T('Cliente'))
+    #auth.add_group('Fornitore', T('Fornitore'))
+    #auth.add_group('Amministratore', T('Amministratore)')
+    #auth.add_group('Sviluppatore', T('Sviluppatore'))
+    return dict(message=T("Gruppi creati:"),groups=groups)
