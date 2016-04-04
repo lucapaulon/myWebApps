@@ -1013,10 +1013,16 @@
     <Content Include="web2py\applications\CUP\views\default\gestione_Stato_prestazione.html" />
     <Content Include="web2py\applications\CUP\views\default\nuova_richiesta.html" />
     <Content Include="web2py\applications\CUP\views\default\gestione_Servizio_disponibile.html" />
+    <Content Include="web2py\applications\CUP\views\default\ricerca_cliente.html" />
+    <Content Include="web2py\applications\CUP\views\default\ricerca_fornitore.html" />
+    <Content Include="web2py\applications\CUP\views\default\ricerca_servizio.html" />
+    <Content Include="web2py\applications\CUP\views\default\visualizza_dettagli_cliente.html" />
     <Content Include="web2py\applications\CUP\views\default\visualizza_dettagli_fornitore.html" />
     <Content Include="web2py\applications\CUP\views\default\index.html" />
     <Content Include="web2py\applications\CUP\views\default\archivio_richieste.html" />
     <Content Include="web2py\applications\CUP\views\default\user.html" />
+    <Content Include="web2py\applications\CUP\views\default\visualizza_dettagli_richiesta.html" />
+    <Content Include="web2py\applications\CUP\views\default\visualizza_dettagli_servizio.html" />
     <Content Include="web2py\applications\CUP\views\generic.html" />
     <Content Include="web2py\applications\CUP\views\generic.ics" />
     <Content Include="web2py\applications\CUP\views\generic.json" />

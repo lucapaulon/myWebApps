@@ -8,7 +8,7 @@
 #response.logo = A(B('web',SPAN(2),'py'),XML('&trade;&nbsp;'),
 #                  _class="navbar-brand",_href="http://www.web2py.com/",
 #                  _id="web2py-logo")
-response.logo = A(B('CUP',SPAN('ON'),'LINE'),XML('&trade;&nbsp;'),
+response.logo = A(B('CUP',SPAN('ON'),'LINE Servizi Sanitari'),XML('&trade;&nbsp;'),
                   _class="navbar-brand",_href=URL('default', 'index'),
                   _id="web2py-logo")
 response.title = request.application.replace('_',' ').title()

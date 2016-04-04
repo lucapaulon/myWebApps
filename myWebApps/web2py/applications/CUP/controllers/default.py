@@ -10,7 +10,7 @@
 
 #def index(): redirect(URL(r=request,c='default',f='archivio_richieste'))
 def index(): 
-    response.title = T('CUPONLINE Servizi Sanitari')
+    response.title = T('Gratis, rapido e ti fa risparmiare!')
     return dict(message=T(""))
 
 def search():
@@ -58,11 +58,11 @@ def call():
 def archivio_richieste():
     pageTitle=T('Archivio delle richieste')
     if session.flash: response.flash = session.flash
-    links=[   lambda row: A('Dettagli richiesta', _href=URL("default","tabella_Prestazione/view/Prestazione",args=[row.Prestazione.id]))
-            , lambda row: A('Dettagli servizio', _href=URL("default","tabella_Servizio/view/Servizio",args=[row.Servizio.id]))
+    links=[   lambda row: A('Dettagli richiesta', _href=URL("default","visualizza_dettagli_richiesta",args=[row.Prestazione.id]))
+            , lambda row: A('Dettagli servizio', _href=URL("default","visualizza_dettagli_servizio",args=[row.Servizio.id]))
             #, lambda row: A('Dettagli fornitore', _href=URL("crud","tabella_Fornitore/view/Fornitore",args=[row.Fornitore.id]))
             , lambda row: A('Dettagli fornitore', _href=URL("default","visualizza_dettagli_fornitore",args=[row.Fornitore.id]))
-            , lambda row: A('Modifica dettagli fornitore', _href=URL("default","modifica_dettagli_fornitore",args=[row.Fornitore.id]))
+            #, lambda row: A('Modifica dettagli fornitore', _href=URL("default","modifica_dettagli_fornitore",args=[row.Fornitore.id]))
           ]
     
     query = ((db.Prestazione.is_active==True) & (db.Prestazione.created_by==auth.user_id)) if request.get_vars.keywords else (db.Prestazione.id==0)                                        
@@ -92,12 +92,28 @@ def archivio_richieste():
     return locals() # dict(grid=grid)
 
 def nuova_richiesta():
-    pageTitle=T('Nuova richiesta')
+    pageTitle=T('Richiesta')
     if session.flash: response.flash = session.flash
-    form_richiesta = SQLFORM(db.Prestazione)
-    if session.richiesta: form_richiesta.vars = session.richiesta   
+
+    form_richiesta = SQLFORM(db.Prestazione                     
+                            ,fields=[
+                                     'Servizio' 
+                                    ,'Fornitore'  
+                                    ,'Cliente'
+                                    ,'messaggio_utente'                
+                                    ]
+                            ,col3 = {
+                                     'Servizio':A(T('ricerca il servizio'), _href=URL("default", "ricerca_servizio"))
+                                    ,'Fornitore':A(T('ricerca il fornitore'), _href=URL("default", "ricerca_fornitore"))
+                                    ,'Cliente':A(T('ricerca il cliente'), _href=URL("default", "ricerca_cliente"))
+                                    }
+                            )
+    if session.richiesta: 
+        form_richiesta.vars = session.richiesta
+    else: 
+        session.richiesta=form_richiesta.vars   
     if form_richiesta.validate():
-        session.richiesta=form_richiesta.vars
+        #session.richiesta=form_richiesta.vars
         session.flash = None
         redirect(URL('conferma_richiesta'))
         ### deal with uploads explicitly
@@ -126,18 +142,29 @@ def conferma_richiesta():
         redirect(URL('archivio_richieste'))          
     return dict (pageTitle=pageTitle,richiesta=richiesta, form_confirm=form_confirm)
 
+def visualizza_dettagli_richiesta():
+    pageTitle=T('Richiesta (dettagli)')
+    id = request.args[0]
+    query = (db.Prestazione.is_active==True) & (db.Prestazione.id==id)
+    rows = db(query).select()
+    grid=SQLFORM(db.Prestazione, db.Prestazione[id]
+                    ,fields=['uuid', 'Servizio', 'Fornitore', 'Cliente' 
+                            ,'messaggio_utente', 'giorno', 'prezzo', 'messaggio_studio'                   
+                            ]
+                    ,labels={'Servizio':T('Servizio richiesto'),'Fornitore':T('al fornitore'), 'Cliente':T('per il cliente'), 'messaggio_utente':T('Messaggio inviato'),'uuid':T('identificativo univoco della richiesta'), 'prezzo':T('e un prezzo di euro'), 'giorno':T('Il fornitore ha proposto il giorno'), 'messaggio_studio':T('specificando')}
+                    ,readonly=True,showid=True)                   
+    return locals()
 
 def visualizza_dettagli_fornitore():
-    pageTitle=T('Dettagli del fornitore')
+    pageTitle=T('Fornitore (dettagli)')
     id = request.args[0]
-    session.fornitore = id
     query = (db.Fornitore.is_active==True) & (db.Fornitore.id==id)
     rows = db(query).select()
     grid=SQLFORM.grid(query
                     ,fields=[db.Fornitore.nome 
                             ,db.Fornitore.id                         
                             ]
-                    ,headers={'Fornitore.nome':'Fornitore (nome)','Fornitore.id':'Dettagli (id fornitore)'}
+                    ,headers={'Fornitore.nome':'Fornitore (nome)','Fornitore.id':'Dettagli (id)', 'Fornitore.codice':'Dettagli (codice)'}
                     ,showbuttontext=False
                     ,deletable=False
                     ,editable = False  #PROVARE editable= [lambda row :  row.locked == 0] #https://groups.google.com/forum/#!searchin/web2py/SQLFORM.grid$20selectable/web2py/7Trx6afrNYI/T8K3k7TXcb8J
@@ -153,6 +180,59 @@ def visualizza_dettagli_fornitore():
     longitude=rows[0].longitude
     map_popup = rows[0].map_popup
     return locals()
+
+def visualizza_dettagli_cliente():
+    pageTitle=T('Cliente (dettagli)')
+    id = request.args[0]
+    query = (db.Cliente.is_active==True) & (db.Cliente.id==id)
+    rows = db(query).select()
+    grid=SQLFORM.grid(query
+                    ,fields=[db.Cliente.nome 
+                            ,db.Cliente.id
+                            ,db.Cliente.codice                         
+                            ]
+                    ,headers={'Cliente.nome':'Cliente (nome)','Cliente.id':'Dettagli (id)', 'Cliente.codice':'Dettagli (codice)'}
+                    ,showbuttontext=False
+                    ,deletable=False
+                    ,editable = False  #PROVARE editable= [lambda row :  row.locked == 0] #https://groups.google.com/forum/#!searchin/web2py/SQLFORM.grid$20selectable/web2py/7Trx6afrNYI/T8K3k7TXcb8J
+                    ,details = False
+                    ,create = False
+                    ,selectable = None
+                    ,links_placement = 'right', buttons_placement = 'right'
+                    ,user_signature=False
+                    ,csv=False
+                    ,searchable=False)                   
+    map = _map()
+    latitude=rows[0].latitude
+    longitude=rows[0].longitude
+    map_popup = rows[0].map_popup
+    return locals()
+
+def visualizza_dettagli_servizio():
+    pageTitle=T('Servizio (dettagli)')
+    id = request.args[0]
+    query = (db.Servizio.is_active==True) & (db.Servizio.id==id)
+    rows = db(query).select()
+    grid=SQLFORM.grid(query
+                    ,fields=[db.Servizio.nome 
+                            ,db.Servizio.id
+                            ,db.Servizio.codice                         
+                            ]
+                    ,headers={'Servizio.nome':'Servizio (nome)','Servizio.id':'Dettagli (id)', 'Servizio.codice':'Dettagli (codice)'}
+                    ,showbuttontext=False
+                    ,deletable=False
+                    ,editable = False  #PROVARE editable= [lambda row :  row.locked == 0] #https://groups.google.com/forum/#!searchin/web2py/SQLFORM.grid$20selectable/web2py/7Trx6afrNYI/T8K3k7TXcb8J
+                    ,details = False
+                    ,create = False
+                    ,selectable = None
+                    ,links_placement = 'right', buttons_placement = 'right'
+                    ,user_signature=False
+                    ,csv=False
+                    ,searchable=False)                   
+    return locals()
+
+
+
 
 def modifica_dettagli_fornitore():
     pageTitle=T('Edit del fornitore')
@@ -272,10 +352,10 @@ def import_and_sync():
 
 tabelle= [tn for tn in db.tables if not (tn.endswith('_archive') or tn.startswith('auth_') or tn.startswith('plugin_'))  ]
 response.menu = [
-                    (T('Nuova richiesta'), False, URL('default', 'nuova_richiesta'), [])
-                    ,(T('Servizi'), False, URL('default', 'gestione_Servizio'), [])
-                    ,(T('Fornitori'), False, URL('default', 'gestione_Fornitore'), [])
-                    ,(T('Clienti'), False, URL('default', 'gestione_Cliente'), [])
+                    (T('Richiesta'), False, URL('default', 'nuova_richiesta'), [])
+                    ,(T('Servizio'), False, URL('default', 'ricerca_servizio'), [])
+                    ,(T('Fornitore'), False, URL('default', 'ricerca_fornitore'), [])
+                    ,(T('Cliente'), False, URL('default', 'ricerca_cliente'), [])
                     ,(T('Archivio richieste'), False, URL('default', 'archivio_richieste'), [])
                     ,(T('HQ'), False, '#',
                                             [ (T(tn), False, URL('default', 'gestione_%s' % tn) ) for tn in tabelle ])
@@ -298,9 +378,129 @@ def gestione_Servizio_disponibile():return _gestione_tabella('Servizio_disponibi
 def gestione_Soddisfazione():return _gestione_tabella('Soddisfazione')
 
 def _gestione_tabella(tableName):
-    pageTitle=T('Gestione '+tableName)
-    grid=SQLFORM.grid( db[tableName], user_signature=False) 
+    pageTitle=T(tableName)
+    grid=SQLFORM.grid( db[tableName])                      
     return dict(grid=grid, pageTitle=pageTitle)
+
+
+def ricerca_fornitore():
+    pageTitle=T('Fornitore')   
+    elemento_selezionato=T('Nessuno selezionato')    
+    id = 0
+    if session.richiesta.Fornitore: 
+        id = session.richiesta.Fornitore
+        elemento_selezionato = db.Fornitore[id].nome+'('+db.Fornitore[id].codice+') '+T('selezionato')
+        elemento_selezionato = A(elemento_selezionato, _href=URL("default","visualizza_dettagli_fornitore",args=[id]))
+    else: fornitore = 0
+    query = ((db.Fornitore.is_active==True)) if request.get_vars.keywords else (db.Fornitore.id==id)   
+    links=[   
+             lambda row: A('Dettagli', _href=URL("default","visualizza_dettagli_fornitore",args=[row.id]))
+            ,lambda row: A('Seleziona', _href=URL("default","_seleziona_fornitore",args=[row.id]))
+          ] 
+    grid=SQLFORM.grid( query
+                      ,fields=[db.Fornitore.id, db.Fornitore.nome, db.Fornitore.codice                         
+                            ]
+                      ,links=links                  
+                      ,showbuttontext=False
+                      ,deletable=False
+                      ,editable = False  #PROVARE editable= [lambda row :  row.locked == 0] #https://groups.google.com/forum/#!searchin/web2py/SQLFORM.grid$20selectable/web2py/7Trx6afrNYI/T8K3k7TXcb8J
+                      ,details = True
+                      ,create = False
+                      ,selectable = None
+                      ,links_placement = 'right', buttons_placement = 'right'
+                      ,user_signature=False
+                      ,csv=False
+                      ,searchable=True
+                    )                       
+    return dict(pageTitle=pageTitle, elemento_selezionato=elemento_selezionato, grid=grid)
+
+def _seleziona_fornitore(): 
+    session.richiesta.Fornitore = request.args[0]
+    session.flash = T('Fornitore selezionato')      
+    redirect(URL('nuova_richiesta'))    
+    return
+
+###################################################################################################################################
+def ricerca_servizio():
+    pageTitle=T('Servizio')   
+    elemento_selezionato=T('Nessuno selezionato')
+    id = 0    
+    if session.richiesta.Servizio: 
+        id = session.richiesta.Servizio
+        elemento_selezionato = db.Servizio[id].nome+'('+db.Servizio[id].codice+') '+T('selezionato')
+        elemento_selezionato = A(elemento_selezionato, _href=URL("default","visualizza_dettagli_servizio",args=[id]))
+    else: fornitore = 0
+    query = ((db.Servizio.is_active==True)) if request.get_vars.keywords else (db.Servizio.id==id)     
+    links=[   
+             lambda row: A('Dettagli', _href=URL("default","visualizza_dettagli_servizio",args=[row.id]))
+            ,lambda row: A('Seleziona', _href=URL("default","_seleziona_servizio",args=[row.id]))
+          ] 
+    grid=SQLFORM.grid( query
+                      ,fields=[db.Servizio.id, db.Servizio.nome, 
+                               db.Servizio.codice                         
+                              ]
+                      ,links=links                  
+                      ,showbuttontext=False
+                      ,deletable=False
+                      ,editable = False  #PROVARE editable= [lambda row :  row.locked == 0] #https://groups.google.com/forum/#!searchin/web2py/SQLFORM.grid$20selectable/web2py/7Trx6afrNYI/T8K3k7TXcb8J
+                      ,details = True
+                      ,create = False
+                      ,selectable = None
+                      ,links_placement = 'right', buttons_placement = 'right'
+                      ,user_signature=False
+                      ,csv=False
+                      ,searchable=True
+                    )                       
+    return dict(pageTitle=pageTitle, elemento_selezionato=elemento_selezionato, grid=grid)
+
+def _seleziona_servizio(): 
+    session.richiesta.Servizio = request.args[0]
+    session.flash = T('Servizio selezionato')      
+    redirect(URL('nuova_richiesta'))    
+    return
+###################################################################################################################################
+
+###################################################################################################################################
+def ricerca_cliente():
+    pageTitle=T('Cliente')   
+    elemento_selezionato=T('Nessuno selezionato')
+    id = 0    
+    if session.richiesta.Cliente: 
+        id = session.richiesta.Cliente
+        elemento_selezionato = db.Cliente[id].nome+'('+db.Cliente[id].codice+') '+T('selezionato')
+        elemento_selezionato = A(elemento_selezionato, _href=URL("default","visualizza_dettagli_cliente",args=[id]))
+    else: fornitore = 0
+    query = ((db.Cliente.is_active==True) & (db.Cliente.created_by==auth.user_id)) if request.get_vars.keywords else (db.Cliente.id==id)   
+    links=[   
+             lambda row: A('Dettagli', _href=URL("default","visualizza_dettagli_cliente",args=[row.id]))
+            ,lambda row: A('Seleziona', _href=URL("default","_seleziona_cliente",args=[row.id]))
+          ] 
+    grid=SQLFORM.grid( query
+                      ,fields=[db.Cliente.id, db.Cliente.nome, 
+                               db.Cliente.codice                         
+                              ]
+                      ,links=links                  
+                      ,showbuttontext=False
+                      ,deletable=False
+                      ,editable = False  #PROVARE editable= [lambda row :  row.locked == 0] #https://groups.google.com/forum/#!searchin/web2py/SQLFORM.grid$20selectable/web2py/7Trx6afrNYI/T8K3k7TXcb8J
+                      ,details = True
+                      ,create = False
+                      ,selectable = None
+                      ,links_placement = 'right', buttons_placement = 'right'
+                      ,user_signature=False
+                      ,csv=False
+                      ,searchable=True
+                    )                       
+    return dict(pageTitle=pageTitle, elemento_selezionato=elemento_selezionato, grid=grid)
+
+def _seleziona_cliente(): 
+    session.richiesta.Cliente = request.args[0]
+    session.flash = T('Cliente selezionato')      
+    redirect(URL('nuova_richiesta'))    
+    return
+###################################################################################################################################
+
+
 
 def test():
     config=dict(color='black', language='English')
